@@ -42,11 +42,39 @@ class FlaskrTestCase(unittest.TestCase):
         return self.app.get('/logout', follow_redirects=True)
 
     # assert functions
+
     def test_empty_db(self):
         """Ensure database is blank"""
         rv = self.app.get('/')
         assert 'No entries here so far' in rv.data
 
+    def test_login_logout(self):
+        """Test login and logout using helper functions"""
+        rv = self.login(flaskr.app.config['USERNAME'], 
+                        flaskr.app.config['PASSWORD'])
+        assert 'You were logged in' in rv.data
+        rv = self.logout()
+        assert 'You were logged out' in rv.data
+        rv = self.login(flaskr.app.config['USERNAME'] + 'x', 
+                        flaskr.app.config['PASSWORD'])
+        assert 'Invalid username' in rv.data
+        rv = self.login(flaskr.app.config['USERNAME'],
+                        flaskr.app.config['PASSWORD'] + 'x')
+        assert 'Invalid password' in rv.data
+
+    def test_message(self):
+        """Ensure that user can post messages"""
+        self.login(flaskr.app.config['USERNAME'], 
+                   flaskr.app.config['PASSWORD'])
+        rv = self.app.post('/add', data=dict(
+            title = '<Hello>',
+            text='<strong>HTML</strong> allowed here'
+            ), follow_redirects=True)
+        assert 'No entries here so far' not in rv.data
+        assert '&lt;Hello&gt;' in rv.data
+        assert '<strong>HTML</strong> allowed here' in rv.data
+
+        
 
 if __name__ == '__main__':
     unittest.main()
